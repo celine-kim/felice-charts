@@ -1,3 +1,36 @@
 apiVersion: v1
-entries: {}
-generated: "2022-01-06T23:26:21.898311269+09:00"
+entries:
+  felice-spark:
+  - apiVersion: v2
+    appVersion: "1.4"
+    created: "2022-01-07T00:22:00.308444414+09:00"
+    description: Helm chart for SPARK FELICE®
+    digest: 2249c865dca77fc3cfcb80e77c94f3c5a731059da3fd523d982efde9b7647c99
+    name: felice-spark
+    type: application
+    urls:
+    - felice-spark-1.0.0.tgz
+    version: 1.0.0
+  kafka-spark:
+  - apiVersion: v2
+    appVersion: 2.8.1
+    created: "2022-01-07T00:22:00.310282755+09:00"
+    description: Helm chart for Apache Kafka (spark distribution)
+    digest: db4a413c481b514276a67ea56ce560e904397fffcf84005e081f97ef12c0ba7a
+    name: kafka-spark
+    type: application
+    urls:
+    - kafka-spark-1.0.0.tgz
+    version: 1.0.0
+  zookeeper-spark:
+  - apiVersion: v2
+    appVersion: 3.6.3
+    created: "2022-01-07T00:22:00.311517499+09:00"
+    description: Helm chart for Apache ZooKeeper (spark distribution)
+    digest: 634fb7e6ce3de9608d95f9cea82e8100144bbf633124295d527b84b4f0da95b4
+    name: zookeeper-spark
+    type: application
+    urls:
+    - zookeeper-spark-1.0.0.tgz
+    version: 1.0.0
+generated: "2022-01-07T00:22:00.30486467+09:00"
