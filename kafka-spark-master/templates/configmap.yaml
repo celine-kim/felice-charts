@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kafka.fullname" . }}-broker-env
+data:
+  ## check listener items
+  {{- if ne (int .Values.replicaCount) (len .Values.configs.listeners)}}
+  {{- fail "# of items in listeners must same as replicaCount"}}
+  {{- end }}
+
+  {{- range $index := until (int .Values.replicaCount) }}
+  broker-{{ $index }}.env: |+
+    export KAFKA_LISTENERS={{ slice $.Values.configs.listeners $index (add $index 1) | first }}
+    {{- if lt $index (len $.Values.configs.advertisedListeners) }}
+    export KAFKA_ADVERTISED_LISTENERS={{ slice $.Values.configs.advertisedListeners $index (add $index 1) | first }}
+    {{- end }}
+
+  {{- end }}
+  

@@ -1,0 +1,214 @@
+## Default values for kafka.
+## This is a YAML-formatted file.
+## Declare variables to be passed into your templates.
+
+########## REPLICA SETTING ##########
+## in production, replicas at least 3
+## if test, should change container's setting properly
+replicaCount: 3
+
+########## CONTAINER IMAGE SETTING ##########
+images:
+  registry: "sparkandassociates"  # docker hub
+  pullPolicy: "Always"
+
+imagePullSecrets: #[]
+  - name: "dockerhub-sparkandassociates"
+  - name: "bccard-dockerhub-sparkandassociates"
+  - name: "kt-nexr-dockerhub-sparkandassociates"
+
+
+########## HELM NAME SETTING ##########
+nameOverride: "spark"
+fullnameOverride: ""
+
+
+########## EXECUTION SETTING ##########
+configs:
+  ## storage volume request
+  volume:
+    storage: 100Gi
+    storageClass: ""
+  ########## BASIC SETTINGS ##########
+  ## default values will be fine
+  ####################
+  ## must check the service name of the zookeeper-spark statefulset
+  zookeeperConnect: "zookeeper-spark-cs:2181/kafka"
+  ## default protocolMap is PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+  ## if need other map must match listeners and advertisedListeners settings
+  protocolMap: PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+  # protocolMap: CLIENT:SASL_PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:SASL_PLAINTEXT 
+  ## listeners and advertised.listeners
+  listeners:
+    - SASL_PLAINTEXT://:9093
+    - SASL_PLAINTEXT://:9093
+    - SASL_PLAINTEXT://:9093
+    # - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://:9094
+    # - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://:9094
+    # - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://:9094
+  ## if advertisedListeners not empty, uncomment and set values
+  advertisedListeners: []
+  #   - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://172.25.3.19:31110
+  #   - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://172.25.3.19:31111
+  #   - CLIENT://:9092,INTERNAL://:9093,EXTERNAL://172.25.3.19:31112
+  optional: #[]
+    ########## AUTH SETTINGS ##########
+    ## this settings are related with others such as listeners, etc
+    ####################
+    ## if zookeeper auth enabled, must specify
+    - name: SKAFKA_ZOOKEEPER_USER
+      value: "kafka:kafka-secret"
+    ## when acl enabled, must specify kafka super user
+    - name: KAFKA_AUTHORIZER_CLASS_NAME
+      value: kafka.security.authorizer.AclAuthorizer
+    - name: KAFKA_SUPER_USERS
+      value: User:admin
+    ## enable SASL SCRAM-SHA-512
+    - name: KAFKA_SASL_ENABLED_MECHANISMS
+      value: SCRAM-SHA-512
+    - name: SKAFKA_SCRAM_USERS
+      value: "admin:admin-secret alice:alice-secret"
+    ## INTER BROKER SECURITY
+    - name: KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL
+      value: SCRAM-SHA-512
+    - name: KAFKA_SECURITY_INTER_BROKER_PROTOCOL
+      value: SASL_PLAINTEXT
+
+    ########## PRODUCTION SETTINGS ##########
+    ## default values will be fine
+    ####################
+    ## internal topics for production. if single node, change values to 1
+    - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+      value: "3"
+    - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+      value: "3"
+    - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+      value: "2"
+    ## production setting for consumer. if test, change value to 0
+    - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+      value: "3000"
+    ## jmx exporter for felice
+    - name: JMX_PROMETHEUS_ENABLE
+      value: "true"
+    - name: JMX_PROMETHEUS_PORT
+      value: "9404"
+
+    ########## PERFORMANCE SETTINGS ##########
+    # - name: KAFKA_HEAP_OPTS
+    #   value: "-Xmx1G -Xms1G"
+    # - name: KAFKA_JVM_PERFORMANCE_OPTS
+    #   value: "-server -XX:MetaspaceSize=96m -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:G1HeapRegionSize=16M -XX:MinMetaspaceFreeRatio=50 -XX:MaxMetaspaceFreeRatio=80 -Djava.awt.headless=true"
+    ## increase recovery threads for many partitions : num.recovery.threads.per.data.dir
+    - name: KAFKA_NUM_RECOVERY_THREADS_PER_DATA_DIR
+      value: "5"
+    ## increase log cleaner threads for many partitions : log.cleaner.threads
+    - name: KAFKA_LOG_CLEANER_THREADS
+      value: "2"
+    
+    ########## NODE_EXPORTER SETTINGS ##########
+    ## For the Felice, must enable integrated node exporter
+    - name: RUN_NODE_EXPORTER
+      value: "true"
+    ## If needs more collectors to enable, uncomment follows and add parameters
+    # - name: NODE_EXPORTER_PARAMS
+    #   value: "--collector.disable-defaults
+    #   --collector.filesystem
+    #   --collector.cpu
+    #   --collector.meminfo
+    #   --collector.netstat_detail"
+    
+    
+########## K8S SERVICE SETTING ##########
+## should match port number to container
+service:
+  type: ClusterIP
+  port: 9093
+  NodePorts: #[]
+  ## broker 0
+  # - ports:
+  #   # - port: 9092
+  #   #   name: client
+  #   - port: 9094
+  #     name: external
+  #     targetPort: 9094
+  #     nodePort: 31110
+  # ## broker 1
+  # - ports:
+  #   - port: 9094
+  #     name: external
+  #     targetPort: 9094
+  #     nodePort: 31111
+  # ## broker 2
+  # - ports:
+  #   - port: 9094
+  #     name: external
+  #     targetPort: 9094
+  #     nodePort: 31112
+
+
+########## K8S RESOURCE SETTING ##########
+resources: #{}
+  ## We usually recommend not to specify default resources and to leave this as a conscious
+  ## choice for the user. This also increases chances charts run on environments with little
+  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  ## limits:
+  ##   cpu: 1
+  ##   memory: 10Gi
+  requests:
+    cpu: 500m
+    memory: 3Gi
+
+
+########## K8S AUTOSCALE SETTING : MUST DISABLE ##########
+autoscaling:
+  enabled: false
+  # minReplicas: 1
+  # maxReplicas: 100
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+
+########## OTHER SETTING ##########
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: #{}
+  ## For security reasons, make the container's process owner group non-root
+  fsGroup: 1000620000  # from okd, no specific meaning
+
+securityContext: #{}
+  ## For security reasons, make the container's process owner non-root
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000620000  # from okd, no specific meaning
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,157 @@
+## Default values for zookeeper.
+## This is a YAML-formatted file.
+## Declare variables to be passed into your templates.
+
+########## REPLICA SETTING ##########
+## replicas must be in odd number and 3 or 5 is the best.
+## not needed more than 5
+replicaCount: 3
+
+########## CONTAINER IMAGE SETTING ##########
+images:
+  registry: "sparkandassociates"  # docker hub
+  pullPolicy: "Always"
+
+imagePullSecrets: #[]
+  - name: "dockerhub-sparkandassociates"
+  - name: "bccard-dockerhub-sparkandassociates"
+  - name: "kt-nexr-dockerhub-sparkandassociates"
+
+
+########## HELM NAME SETTING ##########
+nameOverride: "spark"
+fullnameOverride: ""
+
+
+########## EXECUTION SETTING ##########
+configs:
+  ## node exporter port number. comment out this settings if not use node exporter
+  # nodeExporter: #{}
+  #   port: 9100
+  ## storage volume request
+  volume:
+    storage: 10Gi
+    storageClass: ""
+  ########## BASIC SETTINGS ##########
+  ## zookeeper server configurations
+  ## refer the administrators' documents for Apache ZooKeeper
+  ####################
+  optional: #[]
+    ########## NODE_EXPORTER SETTINGS ##########
+    ## For the Felice, should enable integrated node exporter
+    - name: RUN_NODE_EXPORTER
+      value: "true"
+    ## If needs more collectors to enable, uncomment follows and add parameters
+    # - name: NODE_EXPORTER_PARAMS
+    #   value: "--collector.disable-defaults
+    #   --collector.filesystem
+    #   --collector.cpu
+    #   --collector.meminfo
+    #   --collector.netstat_detail"
+
+    ########## AUTH SETTINGS ##########
+    ## If needs authentication, uncomment follows and set the values
+    ## Please refer https://cwiki.apache.org/confluence/display/ZOOKEEPER/ZooKeeper+and+SASL
+    ####################
+    ## SASLAuthenticationProvider (integrated)
+    - name: ZOO_AUTH_PROVIDER__1
+      value: org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+    ## enabling server-server auth, if doesn't need set to false or comment out
+    - name: SZOO_SERVERAUTH_SASL_MD5_ENABLE
+      value: "true"
+    ## username for server-server auth
+    - name: SZOO_SERVERAUTH_USER
+      value: zookeeper
+    ## password for server-server auth
+    - name: SZOO_SERVERAUTH_PASS
+      value: zookeeper-secret
+    ## enabling client-server auth, if doesn't need set to false or comment out
+    - name: SZOO_CLIENTAUTH_SASL_MD5_ENABLE
+      value: "true"
+    ## Username 'super' must exist as it is reserved for superuser use
+    ## List the credentials of all clients separated by spaces
+    ## credential pattern : user_[username]=password
+    - name: SZOO_CLIENTAUTH_USERS
+      value: user_super="super-secret" user_kafka="kafka-secret" user_zookeeper="zookeeper-secret"
+    
+    ########## JVM SETTINGS ##########
+    ## JVM heap size, a maximum of 2000 bytes is fine in all cases
+    ## if change this value, must check resoruce request or limit
+    # - name: ZK_SERVER_HEAP
+    #   value: "1000"
+    ## if needs additional jmx monitoring, uncomment and assign the port number
+    # - name: JMXPORT
+    #   value: "2099"
+
+
+########## K8S SERVICE SETTING ##########
+## Should match client port number of zookeeper service
+service:
+  type: ClusterIP
+  port: 2181
+
+
+########## K8S RESOURCE SETTING ##########
+resources: #{}
+  ## We usually recommend not to specify default resources and to leave this as a conscious
+  ## choice for the user. This also increases chances charts run on environments with little
+  ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+  ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  requests:
+    cpu: 250m
+    memory: 1Gi
+
+########## K8S AUTOSCALE SETTING : MUST DISABLE ##########
+autoscaling:
+  enabled: false
+  # minReplicas: 1
+  # maxReplicas: 100
+  # targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+########## OTHER SETTINGS ##########
+serviceAccount:
+  ## Specifies whether a service account should be created
+  create: true
+  ## Annotations to add to the service account
+  annotations: {}
+  ## The name of the service account to use.
+  ## If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: #{}
+  ## For security reasons, make the container's process owner group non-root
+  fsGroup: 1000620000  # from okd, no specific meaning
+
+securityContext: #{}
+  ## For security reasons, make the container's process owner non-root
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000620000  # from okd, no specific meaning
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

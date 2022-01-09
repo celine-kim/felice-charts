@@ -1,0 +1,273 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "felice.fullname" . }}-config
+data:
+  burrow.yaml: |+
+    ## DO NOT MODIFY
+    ## TEMPLATE GENERATED FILE
+    ## GENERATED AT : {{ now | date "2006/01/02 15:04:05 MST" }}
+    ## COPYRIGHT 2021. SPARK&ASSOCIATES Inc. ALL RIGHTS RESERVED.
+    ## ----------
+    ##### LOGGING #####
+    logging:
+      level: info
+
+    ##### INTERNAL WEB SERVER #####
+    httpserver:
+      default:
+        address: ':8000'
+
+    ##### STORAGE SETTINGS #####
+    {{ $clusters := ""}}
+    {{- range $cluster := .Values.monitoringClusters }}
+    {{ $clusters = printf "%s|%s" $clusters ($cluster.name | lower) }}
+    {{- end }}
+    storage:
+      felice:
+        class-name: inmemory
+        expire-group: 86400
+        min-distance: 1
+            
+    ##### CLIENT PROFILES #####
+    {{- $sasl := dict "TMP" "TMP" }}
+    {{- $ssl := dict "TMP" "TMP" }}
+    client-profile:
+    {{- range $cluster := .Values.monitoringClusters }}
+      {{ $cluster.name | lower }}:
+        kafka-version: {{ $cluster.kafka.version }}
+        {{- if hasKey $cluster.kafka "security" }}
+        {{ $cluster.kafka.security.protocol }}: {{ $cluster.name | lower }}
+        {{- if eq $cluster.kafka.security.protocol "sasl" }}
+          {{- $sasl = dict ( $cluster.name | lower ) $cluster.kafka.security | merge $sasl }}
+        {{- else if eq $cluster.kafka.security.protpcol "ssl"}}
+          {{- $ssl = dict ( $cluster.name | lower ) $cluster.kafka.security | merge $ssl }}
+        {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- $sasl = omit $sasl "TMP" }}
+    {{- $ssl = omit $ssl "TMP" }}
+    {{ if or $sasl $ssl }}
+    ##### CLIENT SECURITY #####
+    {{- end }}
+    {{- if $sasl }}
+    sasl:
+      {{- range keys $sasl }}
+      {{ . }}:
+        {{- with get $sasl . }}
+        mechanism: {{ .mechanism }}
+        username: {{ .username }}
+        password: {{ .password }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- if $ssl }}
+    ssl:
+      {{- range keys $ssl }}
+      {{ . }}:
+        {{- with get $ssl . }}
+        mechanism: {{ .mechanism }}
+        username: {{ .username }}
+        password: {{ .password }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+    ##### CLUSTERS #####
+    cluster:
+      {{- range $cluster := .Values.monitoringClusters }}
+      {{ $cluster.name | lower }}:
+        class-name: kafka
+        servers:
+          {{- if $cluster.kafka.domainSuffix }}
+          - {{ $cluster.kafka.hostPrefix }}-hs.{{ $cluster.kafka.domainSuffix }}:{{ $cluster.kafka.clientPort }}
+          {{- else }}
+          - {{ $cluster.kafka.hostPrefix }}-hs:{{ $cluster.kafka.clientPort }}
+          {{- end }}
+        client-profile: {{ $cluster.name | lower }}
+        topic-refresh: 30
+        offset-refresh: 5
+        groups-reaper-refresh: 300
+      {{- end }}
+    
+    ##### CONSUMER #####
+    consumer:
+      {{- range $cluster := .Values.monitoringClusters }}
+      {{ $cluster.name | lower }}:
+        class-name: kafka
+        cluster: {{ $cluster.name | lower }}
+        servers:
+          {{- if $cluster.kafka.domainSuffix }}
+          - {{ $cluster.kafka.hostPrefix }}-hs.{{ $cluster.kafka.domainSuffix }}:{{ $cluster.kafka.clientPort }}
+          {{- else }}
+          - {{ $cluster.kafka.hostPrefix }}-hs:{{ $cluster.kafka.clientPort }}
+          {{- end }}
+        client-profile: {{ $cluster.name | lower }}
+        topic-refresh: 30
+        offset-refresh: 5
+        group-denylist: "burrow-{{ $cluster.name | lower }}"
+      {{- end }}
+
+  prometheus.yml: |+
+    global:
+      scrape_interval:     15s # By default, scrape targets every 15 seconds.
+
+      external_labels:
+        monitor: 'felice-monitor'
+
+    rule_files:
+      - '/opt/felice/rules/*.yml'
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+          - targets:
+            - felice-api:8989
+        - api_version: v2
+        - path_prefix: /api/v2
+
+    #### INTERNAL SERVICES ####
+    scrape_configs:
+      #### FELICE MON : PROMETHEUS ####
+      - job_name: 'felice-mon'
+        # Override the global default and scrape targets from this job every 5 seconds.
+        scrape_interval: 5s
+        static_configs:
+          - targets: ['felice-mon:9090']
+
+      #### FELICE BOARD : GRAFANA ####
+
+      #### FELICE BACKEND ####
+      - job_name: 'felice-back'
+        scrape_interval: 5s
+        metrics_path: /monitor/metrics
+        static_configs:
+          - targets: ['felice-api:7100']
+
+      #### FELICE LAG : BURROW ####
+      - job_name: 'consumer-lag'
+        scrape_interval: 5s
+        static_configs:
+          - targets: ['felice-lag:8000']
+            labels:
+              instance: 'burrow'
+
+      ##########
+      ### GENERATED MONITORING CLUSTER TARGETS : NEW ###
+      ## zookeeper
+      - job_name: zookeeper
+        scrape_interval: 5s
+        file_sd_configs:
+          - files:
+            - 'targets/zookeeper.yaml'
+            refresh_interval: 3m
+      
+      ## zookeeper node
+      - job_name: zookeeper_node
+        scrape_interval: 5s
+        file_sd_configs:
+          - files:
+            - 'targets/zookeeper_node.yaml'
+            refresh_interval: 3m
+      
+      ## kafka
+      - job_name: kafka
+        scrape_interval: 5s
+        file_sd_configs:
+          - files:
+            - 'targets/kafka.yaml'
+            refresh_interval: 3m
+      
+      ## kafka node
+      - job_name: kafka_node
+        scrape_interval: 5s
+        file_sd_configs:
+          - files:
+            - 'targets/kafka_node.yaml'
+            refresh_interval: 3m
+      
+      ## schema_registry (TBD)
+      
+      ## schema_registry node (TBD)
+
+      ########## END OF CONFIG ##########
+
+---
+# felice-mon : /etc/prometheus/targets
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "felice.fullname" . }}-monitoring-targets
+data:
+##### NEW TARGET CONFIG FILES #####
+##### ZOOKEEPER
+  zookeeper.yaml: |+
+    {{- range $cluster := .Values.monitoringClusters }}
+      {{- with $cluster.zookeeper }}
+        {{ range $i := until ( int $cluster.zookeeper.servers ) }}
+          {{- $host := printf "%s-%d.%s-hs" $cluster.zookeeper.hostPrefix $i $cluster.zookeeper.hostPrefix }}
+          {{- if $cluster.zookeeper.domainSuffix }}
+            {{ $host = print $host "." $cluster.zookeeper.domainSuffix }}
+          {{- end }}{{ if 0 }}## if $cluster.zookeeper.domainSuffix ##{{ end }}
+          - targets:
+            - '{{ $host }}:7000'
+            labels:
+              zookeeper: '{{ $host }}:{{ $cluster.zookeeper.clientPort }}'
+              cluster: '{{ $cluster.name }}'
+        {{- end }}{{ if 0 }}## range $i ##{{ end }}
+      {{- end }}{{ if 0 }}## with $cluster.zookeeper ##{{ end }}
+    {{- end }}{{ if 0 }}## range $cluster ##{{ end }}
+
+##### ZOOKEEPER NODE
+  zookeeper_node.yaml: |+
+    {{- range $cluster := .Values.monitoringClusters }}
+      {{- with $cluster.zookeeper }}
+        {{ range $i := until ( int $cluster.zookeeper.servers ) }}
+          {{- $host := printf "%s-%d.%s-hs" $cluster.zookeeper.hostPrefix $i $cluster.zookeeper.hostPrefix }}
+          {{- if $cluster.zookeeper.domainSuffix }}
+            {{ $host = print $host "." $cluster.zookeeper.domainSuffix }}
+          {{- end }}{{ if 0 }}## if $cluster.zookeeper.domainSuffix ##{{ end }}
+          - targets:
+            - '{{ $host }}:9100'
+            labels:
+              zookeeper: '{{ $host }}:{{ $cluster.zookeeper.clientPort }}'
+              cluster: '{{ $cluster.name }}'
+        {{- end }}{{ if 0 }}## range $i ##{{ end }}
+      {{- end }}{{ if 0 }}## with $cluster.zookeeper ##{{ end }}
+    {{- end }}{{ if 0 }}## range $cluster ##{{ end }}
+
+##### KAFKA
+  kafka.yaml: |+
+    {{- range $cluster := .Values.monitoringClusters }}
+      {{- with $cluster.kafka }}
+        {{ range $i := until ( int $cluster.kafka.servers ) }}
+          {{- $host := printf "%s-%d.%s-hs" $cluster.kafka.hostPrefix $i $cluster.kafka.hostPrefix }}
+          {{- if $cluster.kafka.domainSuffix }}
+            {{ $host = print $host "." $cluster.kafka.domainSuffix }}
+          {{- end }}{{ if 0 }}## if $cluster.kafka.domainSuffix ##{{ end }}
+          - targets:
+            - '{{ $host }}:9404'
+            labels:
+              brokerId: '{{ $i }}'
+              cluster: '{{ $cluster.name }}'
+        {{- end }}{{ if 0 }}## range $i ##{{ end }}
+      {{- end }}{{ if 0 }}## with $cluster.zookeeper ##{{ end }}
+    {{- end }}{{ if 0 }}## range $cluster ##{{ end }}
+
+##### KAFKA NODE
+  kafka_node.yaml: |+
+    {{- range $cluster := .Values.monitoringClusters }}
+      {{- with $cluster.kafka }}
+        {{ range $i := until ( int $cluster.kafka.servers ) }}
+          {{- $host := printf "%s-%d.%s-hs" $cluster.kafka.hostPrefix $i $cluster.kafka.hostPrefix }}
+          {{- if $cluster.kafka.domainSuffix }}
+            {{ $host = print $host "." $cluster.kafka.domainSuffix }}
+          {{- end }}{{ if 0 }}## if $cluster.kafka.domainSuffix ##{{ end }}
+          - targets:
+            - '{{ $host }}:9100'
+            labels:
+              brokerId: '{{ $i }}'
+              cluster: '{{ $cluster.name }}'
+        {{ end }}{{ if 0 }}## range $i ##{{ end }}
+      {{- end }}{{ if 0 }}## with $cluster.zookeeper ##{{ end }}
+    {{- end }}{{ if 0 }}## range $cluster ##{{ end }}
