@@ -99,5 +99,7 @@ spec:
       {{- end }}
       #### volumes
       volumes:
+          - name: {{ include "kafka.fullname" . }}-logdir
+            emptyDir: {}
           - name: broker-envs
             emptyDir: {}
