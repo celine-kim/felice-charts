@@ -102,4 +102,5 @@ spec:
           - name: {{ include "kafka.fullname" . }}-logdir
             emptyDir: {}
           - name: broker-envs
-            emptyDir: {}
+            configMap:
+              name: {{ include "kafka.fullname" . }}-broker-env
