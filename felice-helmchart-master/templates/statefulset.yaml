@@ -153,8 +153,16 @@ spec:
               key: burrow.yaml       
       volumes:
         - name: monitoring-config
-          emptyDir: {}
+          configMap:
+            name: {{ include "felice.fullname" . }}-config
         - name: monitoring-targets
+          configMap:
+            name: {{ include "felice.fullname" . }}-monitoring-targets
+        - name: {{ include "felice.fullname" . }}-monitoring-tsdb
+          emptyDir: {}
+        - name: {{ include "felice.fullname" . }}-rulesdir
+          emptyDir: {}
+        - name: {{ include "felice.fullname" . }}-datadir
           emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
