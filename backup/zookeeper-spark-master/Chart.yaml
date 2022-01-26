@@ -1,11 +1,11 @@
 ###
-# Helm chart for SPARK FELICE®
+# Helm chart for Apache ZooKeeper (spark distribution)
 # only work properly for spark distribution
 # COPYRIGHT 2021. SPARK&ASSOCIATES Inc. ALL RIGHTS RESERVED.
 ###
 apiVersion: v2
-name: felice-spark
-description: Helm chart for SPARK FELICE®
+name: zookeeper-spark
+description: Helm chart for Apache ZooKeeper (spark distribution)
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -25,4 +25,4 @@ version: 1.0.0
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
-appVersion: 1.5
+appVersion: 3.6.3

@@ -1,0 +1,43 @@
+## values
+{{- $fullname := include "kafka.fullname" . }}
+{{- $labels := include "kafka.labels" . }}
+{{- $selectorLabels := include "kafka.selectorLabels" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-hs
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  ports:
+  - port: {{ .Values.service.port }} 
+    name: client
+  clusterIP: None
+  selector:
+    {{- $selectorLabels | nindent 4 }}
+
+{{- if eq .Values.service.type "NodePort" }}
+{{ range $index, $item := .Values.service.NodePorts }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullname }}-{{ $index }}-cs
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  type: NodePort
+  # sessionAffinity: ClientIP
+  ports:
+  {{ range $port := $item.ports }}
+  - port: {{ $port.port }}
+    name: {{ $port.name }}
+    {{ if $port.targetPort }}targetPort: {{ $port.targetPort }}{{ end }}
+    {{ if $port.nodePort }}nodePort: {{ $port.nodePort }}{{ end }}
+  {{- end }}
+  selector:
+    {{ $selectorLabels | nindent 4 }}
+    statefulset.kubernetes.io/pod-name: {{ $fullname }}-{{ $index }}
+{{- end }}
+{{- end }}

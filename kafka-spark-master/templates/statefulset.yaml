@@ -99,8 +99,15 @@ spec:
       {{- end }}
       #### volumes
       volumes:
-          - name: {{ include "kafka.fullname" . }}-logdir
-            emptyDir: {}
           - name: broker-envs
             configMap:
               name: {{ include "kafka.fullname" . }}-broker-env
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ include "kafka.fullname" . }}-logdir
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.configs.volume.storageClass }}
+      resources:
+        requests:
+          storage: {{ .Values.configs.volume.storage }}

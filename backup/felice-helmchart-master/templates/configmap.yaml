@@ -36,12 +36,12 @@ data:
     {{- range $cluster := .Values.monitoringClusters }}
       {{ $cluster.name | lower }}:
         kafka-version: {{ $cluster.kafka.version }}
-        {{- if hasKey $cluster.kafka "auth" }}
-        {{ $cluster.kafka.auth.protocol }}: {{ $cluster.name | lower }}
-        {{- if eq $cluster.kafka.auth.protocol "sasl" }}
-          {{- $sasl = dict ( $cluster.name | lower ) $cluster.kafka.auth | merge $sasl }}
-        {{- else if eq $cluster.kafka.auth.protpcol "ssl"}}
-          {{- $ssl = dict ( $cluster.name | lower ) $cluster.kafka.auth | merge $ssl }}
+        {{- if hasKey $cluster.kafka "security" }}
+        {{ $cluster.kafka.security.protocol }}: {{ $cluster.name | lower }}
+        {{- if eq $cluster.kafka.security.protocol "sasl" }}
+          {{- $sasl = dict ( $cluster.name | lower ) $cluster.kafka.security | merge $sasl }}
+        {{- else if eq $cluster.kafka.security.protpcol "ssl"}}
+          {{- $ssl = dict ( $cluster.name | lower ) $cluster.kafka.security | merge $ssl }}
         {{- end }}
         {{- end }}
     {{- end }}
@@ -191,66 +191,6 @@ data:
       ## schema_registry node (TBD)
 
       ########## END OF CONFIG ##########
-
-  felice_external_cluster_config.yml: |+
-    cluster-configs:
-    {{- range $cluster := .Values.monitoringClusters }}
-      - name: "{{ $cluster.name }}"
-        description: "{{ $cluster.description }}"
-        {{- with $cluster.zookeeper }}
-        zookeeper:
-          root-znode: "{{ $cluster.name }}"
-          hosts:
-          {{- range $i := until ( int $cluster.zookeeper.servers ) }}
-            {{- $host := printf "%s-%d.%s-hs" $cluster.zookeeper.hostPrefix $i $cluster.zookeeper.hostPrefix }}
-            {{- if $cluster.zookeeper.domainSuffix }}
-              {{ $host = print $host "." $cluster.zookeeper.domainSuffix }}
-            {{- end }}{{ if 0 }}## if $cluster.zookeeper.domainSuffix ##{{ end }}
-            - address: "{{ $host }}:{{ $cluster.zookeeper.clientPort }}"
-          {{- end }}{{ if 0 }}## range $i ##{{ end }}
-          {{- with $cluster.zookeeper.auth }}
-          auth:
-            {{- toYaml $cluster.zookeeper.auth | nindent 12 }}
-          {{- end }}
-        {{- end }}{{ if 0 }}## with zookeeper ##{{ end }}
-        {{- with $cluster.kafka }}
-        kafka:
-          brokers:
-          {{- range $i := until ( int $cluster.kafka.servers ) }}
-            {{- $host := printf "%s-%d.%s-hs" $cluster.kafka.hostPrefix $i $cluster.kafka.hostPrefix }}
-            {{- if $cluster.kafka.domainSuffix }}
-              {{ $host = print $host "." $cluster.kafka.domainSuffix }}
-            {{- end }}{{ if 0 }}## if $cluster.kafka.domainSuffix ##{{ end }}
-            - name: "broker{{ $i }}"
-              address: "{{ $host }}:{{ $cluster.kafka.clientPort }}"
-          {{- end }}{{ if 0 }}## range $i ##{{ end }}
-          {{- with $cluster.kafka.auth }}
-          auth:
-            protocol: {{ if eq $cluster.kafka.auth.protocol "sasl" }}"SASL_PLAINTEXT"{{ else }}"PLAINTEXT"{{ end }}
-            mechanism: "{{ $cluster.kafka.auth.mechanism }}"
-            username: "{{ $cluster.kafka.auth.username }}"
-            password: "{{ $cluster.kafka.auth.password }}"
-          {{- end }}
-        {{- end }}{{ if 0 }}## with kafka ##{{ end }}
-        {{- with $cluster.schema_registry }}
-        schema-registry:
-          {{- $host := printf "%s-%d.%s-hs" $cluster.schema_registry.hostPrefix 0 $cluster.schema_registry.hostPrefix }}
-          {{- if $cluster.schema_registry.domainSuffix }}
-            {{ $host = print $host "." $cluster.schema_registry.domainSuffix }}
-          {{- end }}{{ if 0 }}## if $cluster.schema_registry.domainSuffix ##{{ end }}
-          address: {{ $host }}:{{ $cluster.schema_registry.clientPort }}
-          {{- with $cluster.schema_registry.auth }}
-          auth:
-            {{- toYaml $cluster.schema_registry.auth | nindent 12 }}
-          {{- end }}
-        {{- end }}
-    {{- end }}
-  
-  felice_external_admin_config.yml: |+
-    {{- with .Values.configs.admin }}
-    admin-id: "{{ .id }}"
-    admin-password: "{{ .password }}"
-    {{- end }}
 
 ---
 # felice-mon : /etc/prometheus/targets

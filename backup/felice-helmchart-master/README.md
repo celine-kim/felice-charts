@@ -28,13 +28,7 @@
 - nameOverride
   helm 설치 시 suffix로 추가 된다.
 - configs
-  felice에 대한 설정
-  - admin
-    UI 초기 관리자 계정에 대한 설정
-    - id
-      초기 관리자 아이디
-    - password
-      초기 관리자 패스워드. 최초 로그인 시 반드시 변경해야 함
+  kafka에 대한 설정
   - volume
     퍼시스턴트 볼륨에 대한 설정
     - tsdb

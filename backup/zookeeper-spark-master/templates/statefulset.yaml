@@ -92,12 +92,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  volumeClaimTemplates:
-  - metadata:
-      name: {{ include "zookeeper.fullname" . }}-datadir
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.configs.volume.storageClass }}
-      resources:
-        requests:
-          storage: {{ .Values.configs.volume.storage }}
+      volumes:
+        - name: {{ include "zookeeper.fullname" . }}-datadir
+          emptyDir: {}

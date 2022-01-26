@@ -16,7 +16,6 @@ imagePullSecrets: #[]
   - name: "dockerhub-sparkandassociates"
   - name: "bccard-dockerhub-sparkandassociates"
   - name: "kt-nexr-dockerhub-sparkandassociates"
-  - name: "douzone-dockerhub-sparkandassociates"
 
 
 ########## HELM NAME SETTING ##########

@@ -10,15 +10,14 @@ replicaCount: 1
 images:
   registry: "sparkandassociates"  # docker hub
   pullPolicy: "Always"
-  serverVersion: 1.5.1
-  clientVersion: 1.3.4
+  serverVersion: 1.4.4
+  clientVersion: 1.3.3
   monitorVersion: 2.32
   
 imagePullSecrets: #[]
   - name: "dockerhub-sparkandassociates"
   - name: "bccard-dockerhub-sparkandassociates"
   - name: "kt-nexr-dockerhub-sparkandassociates"
-  - name: "douzone-dockerhub-sparkandassociates"
 
 
 ########## HELM NAME SETTING ##########
@@ -28,10 +27,6 @@ fullnameOverride: ""
 
 ########## EXECUTION SETTING ##########
 configs:
-  ## for initial UI admin
-  admin:
-    id: "admin"
-    password: "password"
   volumes:
     tsdb:
       storage: 100Gi
@@ -49,45 +44,35 @@ configs:
 monitoringClusters:
   ## first cluster setting
   - name: "kafka"
-    description: "kafka cluster"
     zookeeper:
       # domainSuffix: "default.svc.cluster.local"     # if zookeeper is installed on other namespace
       hostPrefix: "zookeeper-spark"
       servers: 3
       clientPort: 2181
-      ## for auto regist
-      auth:
-        module: "org.apache.zookeeper.server.auth.DigestLoginModule required"
-        username: "kafka"
-        password: "kafka-secret"
     kafka:
       version: "2.8.0"  # major.minor.0 format
       # domainSuffix: "default.svc.cluster.local"     # if kafka is installed on other namespace
       hostPrefix: "kafka-spark"
       servers: 3
       clientPort: 9093
-      ## for auto retist
-      auth:
+      ## for burrow
+      security:
         protocol: "sasl"  ## only sasl or tls
         mechanism: "SCRAM-SHA-512"
         username: "admin"
         password: "admin-secret"
     # schema_registry:
     #   # domainSuffix: "default.svc.cluster.local"     # if kafka is installed on other namespace
-    #   hostPrefix: "schema-registry-spark"
-    #   servers: 1
-    #   clientPort: 8081
-    #   auth:
-    #     username: "username"
-    #     password: "password"
+    #   serviceName: "schema-registry-schema-registry-spark-hs"
+    #   jmxExporterPort: 9404
+    #   nodeExporterPort: 9100
   # ## second cluster setting
-  # - name: "kafka2"
-  #   description: "kafka cluster"
-  #   zookeeper:
-  #     # domainSuffix: "default.svc.cluster.local"     # if zookeeper is installed on other namespace
-  #     hostPrefix: "zookeeper-spark"
-  #     servers: 3
-  #     clientPort: 2181
+  # - name: "kafka270"
+  #   kafka:
+  #     helmReleaseName: "kafka270"
+  #     servers: "3"
+  #     jmxExporterPort: "9404"
+  #     nodeExporterPort: "9100"
 
 ########## K8S SERVICE SETTING ##########
 service:
@@ -96,11 +81,11 @@ service:
     - name: web
       port: 8080
       # targetPort: 8080
-      nodePort: 32080
+      nodePort: 31080
     - name: mon
       port: 9090
       # targetPort: 9090
-      nodePort: 32090
+      nodePort: 31090
 
 
 ########## K8S RESOURCE SETTING ##########

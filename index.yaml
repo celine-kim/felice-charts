@@ -2,65 +2,35 @@ apiVersion: v1
 entries:
   felice-spark:
   - apiVersion: v2
-    appVersion: "1.4"
-    created: "2022-01-10T01:06:21.545272967+09:00"
+    appVersion: "1.5"
+    created: "2022-01-27T00:52:32.233988399+09:00"
     description: Helm chart for SPARK FELICE®
-    digest: aac1243652554c8548397837691e70be0db5ca7f856d2bfa2c775f6f59f57e68
+    digest: 5ad56165ee14161dd76902c0d1ba055334501e7c5e04b4d2e1a07db5b73ae388
     name: felice-spark
     type: application
     urls:
     - felice-spark-1.0.0.tgz
     version: 1.0.0
-  - apiVersion: v2
-    appVersion: "1.4"
-    created: "2022-01-10T01:06:21.552951925+09:00"
-    description: Helm chart for SPARK FELICE®
-    digest: 2249c865dca77fc3cfcb80e77c94f3c5a731059da3fd523d982efde9b7647c99
-    name: felice-spark
-    type: application
-    urls:
-    - backup/felice-spark-1.0.0.tgz
-    version: 1.0.0
   kafka-spark:
   - apiVersion: v2
     appVersion: 2.8.1
-    created: "2022-01-10T01:06:21.549348198+09:00"
+    created: "2022-01-27T00:52:32.236324399+09:00"
     description: Helm chart for Apache Kafka (spark distribution)
-    digest: 923d811b1ef990f9f49453269720405ef4f929e55faa1b84e661e90d784f0749
+    digest: b47f05a6c07ac00fea90d3b6e259e160bb0b53bb2b1be2e84053e8b8df26adb8
     name: kafka-spark
     type: application
     urls:
     - kafka-spark-1.0.0.tgz
     version: 1.0.0
-  - apiVersion: v2
-    appVersion: 2.8.1
-    created: "2022-01-10T01:06:21.555773538+09:00"
-    description: Helm chart for Apache Kafka (spark distribution)
-    digest: db4a413c481b514276a67ea56ce560e904397fffcf84005e081f97ef12c0ba7a
-    name: kafka-spark
-    type: application
-    urls:
-    - backup/kafka-spark-1.0.0.tgz
-    version: 1.0.0
   zookeeper-spark:
   - apiVersion: v2
     appVersion: 3.6.3
-    created: "2022-01-10T01:06:21.551008249+09:00"
+    created: "2022-01-27T00:52:32.237902886+09:00"
     description: Helm chart for Apache ZooKeeper (spark distribution)
-    digest: 2f74243bb0c0fa76a5b1839501ac4c8f2f11f839827b1c8e712ad6fa50150b48
+    digest: 0fb50f88d4cf2c2501229f5c2489d85fd463b537dcd4b26e51b1664ca523d904
     name: zookeeper-spark
     type: application
     urls:
     - zookeeper-spark-1.0.0.tgz
     version: 1.0.0
-  - apiVersion: v2
-    appVersion: 3.6.3
-    created: "2022-01-10T01:06:21.557449316+09:00"
-    description: Helm chart for Apache ZooKeeper (spark distribution)
-    digest: 634fb7e6ce3de9608d95f9cea82e8100144bbf633124295d527b84b4f0da95b4
-    name: zookeeper-spark
-    type: application
-    urls:
-    - backup/zookeeper-spark-1.0.0.tgz
-    version: 1.0.0
-generated: "2022-01-10T01:06:21.544013167+09:00"
+generated: "2022-01-27T00:52:32.230064217+09:00"

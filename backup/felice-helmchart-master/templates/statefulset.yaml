@@ -36,7 +36,7 @@ spec:
           - felice-lag
           ip: "127.0.0.1"
       containers:
-      #### FELICE-MON ####
+      #### felice-mon ####
       - name: {{ .Chart.Name }}-mon
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
@@ -98,17 +98,7 @@ spec:
           initialDelaySeconds: 30
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
-        env:
-        - name: FELICE_EXTERNAL_CLUSTER
-          valueFrom:
-            configMapKeyRef:
-              name: {{ include "felice.fullname" . }}-config
-              key: felice_external_cluster_config.yml
-        - name: FELICE_EXTERNAL_ADMIN
-          valueFrom:
-            configMapKeyRef:
-              name: {{ include "felice.fullname" . }}-config
-              key: felice_external_admin_config.yml
+        # env:
         volumeMounts:
         - name: {{ include "felice.fullname" . }}-rulesdir
           mountPath: /felice-api/prom-rules
@@ -168,6 +158,12 @@ spec:
         - name: monitoring-targets
           configMap:
             name: {{ include "felice.fullname" . }}-monitoring-targets
+        - name: {{ include "felice.fullname" . }}-monitoring-tsdb
+          emptyDir: {}
+        - name: {{ include "felice.fullname" . }}-rulesdir
+          emptyDir: {}
+        - name: {{ include "felice.fullname" . }}-datadir
+          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -194,29 +190,3 @@ spec:
       #   - name: burrow-toml-volume
       #     configMap:
       #       name: {{ include "felice.fullname" . }}-burrow
-  volumeClaimTemplates:
-  - metadata:
-      name: {{ include "felice.fullname" . }}-monitoring-tsdb
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.configs.volumes.tsdb.storageClass }}
-      resources:
-        requests:
-          storage: {{ .Values.configs.volumes.tsdb.storage }}
-  - metadata:
-      name: {{ include "felice.fullname" . }}-rulesdir
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.configs.volumes.rulesdir.storageClass }}
-      resources:
-        requests:
-          storage: {{ .Values.configs.volumes.rulesdir.storage }}
-  - metadata:
-      name: {{ include "felice.fullname" . }}-datadir
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: {{ .Values.configs.volumes.datadir.storageClass }}
-      resources:
-        requests:
-          storage: {{ .Values.configs.volumes.datadir.storage }}
-  
