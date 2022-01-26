@@ -93,4 +93,5 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
- 96     - name: {{ include "zookeeper.fullname" . }}-datadir
+        - name: {{ include "zookeeper.fullname" . }}-datadir
+          emptyDir: {}
